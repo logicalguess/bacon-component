@@ -40,8 +40,11 @@
 
             var userNameWire = wireAjaxOnChange(streams["checkAvailability"].toProperty(), function (user) {
                 return { url: "/usernameavailable/" + user };
-            }, true)
+            }, true);
 
+            userNameWire.requestEntered.onValue(function () {
+                model.lens("fullname").set("");
+            });
 
             // registration
             var registrationWire = wireAjaxOnEvent(streams["registration"], {
@@ -71,16 +74,18 @@
         function show(x) {
             console.log(x);
         }
+
         function nonEmpty(x) {
-            return x.length > 0;
+            return x && x.length > 0;
         }
+
         function setVisibility(element, visible) {
             element.toggle(visible);
         }
+
         function setEnabled(element, enabled) {
             element.attr("disabled", !enabled);
         }
-
 
         function createView(component) {
 
@@ -108,11 +113,7 @@
             component.model.onValue(function (m) {
                 $("#result").text("");
                 console.log("model", m);
-            })
-
-            component.usernameEntered.onValue(function () {
-                component.model.lens("fullname").set("");
-            })
+            });
 
             var registerButtonEnabled = component.usernameEntered.and(fullnameEntered).and(component.usernameAvailable)
                     .and(component.availabilityPending.not()).and(component.registrationSent.not());
