@@ -36,12 +36,12 @@
             lenses["fullname"] = model.lens("fullname");
 
             var streams = {};
-            streams["checkAvailability"] = new Bacon.Bus();
-            streams["registration"] = new Bacon.Bus();
+            streams["username_availability"] = new Bacon.Bus();
+            streams["register"] = new Bacon.Bus();
 
-            streams["checkAvailability"].plug(lenses["username"]);
+            streams["username_availability"].plug(lenses["username"]);
 
-            var userNameWire = wireAjaxOnChange(streams["checkAvailability"].toProperty(), function (user) {
+            var userNameWire = wireAjaxOnChange(streams["username_availability"].toProperty(), function (user) {
                 return { url: "/usernameavailable/" + user };
             }, true);
 
@@ -50,7 +50,7 @@
             });
 
             // registration
-            var registrationWire = wireAjaxOnEvent(streams["registration"], {
+            var registrationWire = wireAjaxOnEvent(streams["register"], {
                 type: "post",
                 url: "/register",
                 contentType: "application/json",
@@ -59,13 +59,13 @@
 
             registrationWire.responseStream.onValue(function () {
                 model.set({username: "", fullname: ""});
-            })
+            });
 
             return {
                 onStateChange: model.onValue.bind(model),
                 lenses: lenses,
                 bind: function(name, stream) {
-                   lenses[name].bind(stream);
+                    lenses[name].bind(stream);
                 },
                 plug: function(name, stream) {
                     streams[name].plug(stream);
@@ -98,26 +98,28 @@
         function createView(component) {
 
             // UI elements
-            var usernameField = $("#username input");
-            var fullnameField = $("#fullname input");
-            var registerButton = $("#register button");
-            var unavailabilityLabel = $("#username-unavailable");
-            var usernameAjaxIndicator = $("#username .ajax");
-            var registerAjaxIndicator = $("#register .ajax");
+            var elems = {};
+            elems["username"] = $("#username input");
+            elems["fullname"] = $("#fullname input");
+            elems["register"] = $("#register button");
+            elems["unavailability_label"] = $("#username-unavailable");
+            elems["username_availability_spinner"] = $("#username .ajax");
+            elems["register_spinner"] = $("#register .ajax");
 
             // bindings
-            component.plug("registration", registerButton.asEventStream("click").doAction(".preventDefault"));
+            component.plug("register", elems["register"].asEventStream("click").doAction(".preventDefault"));
 
-            component.bind("username", Bacon.$.textFieldValue(usernameField));
-            component.bind("fullname", Bacon.$.textFieldValue(fullnameField));
+            component.bind("username", Bacon.$.textFieldValue(elems["username"]));
+            component.bind("fullname", Bacon.$.textFieldValue(elems["fullname"]));
             component.onStateChange(function (m) {
                 $("#result").text("");
                 console.log("model", m);
             });
 
             // visual effects
-            component.usernameAvailable.not().and(component.availabilityPending.not()).onValue(setVisibility, unavailabilityLabel);
-            component.availabilityPending.onValue(setVisibility, usernameAjaxIndicator);
+            component.usernameAvailable.not().and(component.availabilityPending.not()).onValue(setVisibility,
+                    elems["unavailability_label"]);
+            component.availabilityPending.onValue(setVisibility, elems["username_availability_spinner"]);
 
 
             var fullnameEntered = component.lenses["fullname"].map(nonEmpty);
@@ -128,9 +130,9 @@
             var registerButtonEnabled = component.usernameEntered.and(fullnameEntered).and(component.usernameAvailable)
                     .and(component.availabilityPending.not()).and(component.registrationSent.not());
 
-            fullnameEnabled.onValue(setEnabled, fullnameField);
-            registerButtonEnabled.onValue(setEnabled, registerButton);
-            component.registrationPending.onValue(setVisibility, registerAjaxIndicator);
+            fullnameEnabled.onValue(setEnabled, elems["fullname"]);
+            registerButtonEnabled.onValue(setEnabled, elems["register"]);
+            component.registrationPending.onValue(setVisibility, elems["register_spinner"]);
             component.registrationResponse.onValue(function () {
                 $("#result").text("Thanks dude!");
             })
