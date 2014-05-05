@@ -3,6 +3,7 @@
 ![ ](screen1.png) ![ ](screen2.png)
 ![ ](screen3.png) ![ ](screen4.png)
 
+```javascript
         function wireAjaxOnChange(input, svcInfo, init) {
             var request = input.changes().filter(nonEmpty).skipDuplicates().throttle(300)
                     .map(svcInfo);
@@ -131,3 +132,4 @@
         $(function () {
             createView(createComponent());
         })
+```
