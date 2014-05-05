@@ -56,6 +56,10 @@
                 data: JSON.stringify(model.get())
             });
 
+            registrationWire.responseStream.onValue(function () {
+                model.set({username: "", fullname: ""});
+            })
+
             return {
                 model: model,
                 bind: function(name, stream) {
@@ -125,7 +129,6 @@
             registerButtonEnabled.onValue(setEnabled, registerButton);
             component.registrationPending.onValue(setVisibility, registerAjaxIndicator);
             component.registrationResponse.onValue(function () {
-                component.model.set({username: "", fullname: ""});
                 $("#result").text("Thanks dude!");
             })
         }
